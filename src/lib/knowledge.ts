@@ -21,28 +21,38 @@ export async function buildKnowledgeContext(question: string) {
   const faqs: Faq[] = faqSnap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Faq, "id">) }));
 
   const tokens = tokenize(question);
-  const scored = [
-    ...kb.map((k) => ({
-      kind: "kb" as const,
-      score: scoreText(tokens, `${k.title} ${k.tags?.join(" ") ?? ""} ${k.content}`),
-      entry: k,
-    })),
-    ...faqs.map((f) => ({
-      kind: "faq" as const,
-      score: scoreText(tokens, `${f.question} ${f.answer}`),
-      entry: f,
-    })),
-  ]
-    .filter((x) => x.score > 0 || tokens.length === 0)
-    .sort((a, b) => b.score - a.score);
+  const kbScored = kb.map((k) => ({
+    kind: "kb" as const,
+    score: scoreText(tokens, `${k.title} ${k.tags?.join(" ") ?? ""} ${k.content}`),
+    entry: k,
+  }));
+  const faqScored = faqs.map((f) => ({
+    kind: "faq" as const,
+    score: scoreText(tokens, `${f.question} ${f.answer}`),
+    entry: f,
+  }));
 
-  // Always include some context even if zero keyword overlap (cold start).
-  const fallback = scored.length === 0 ? [
-    ...kb.slice(0, 6).map((k) => ({ kind: "kb" as const, score: 0, entry: k })),
-    ...faqs.slice(0, 6).map((f) => ({ kind: "faq" as const, score: 0, entry: f })),
-  ] : [];
+  // Always include the top-N most recently updated KB + FAQ entries even when
+  // their keyword score is zero. The retrieval scorer is naïve (substring
+  // overlap after diacritic stripping) and can miss semantic matches; letting
+  // Claude see the latest KB gives it a fair shot at synthesising an answer.
+  const baseline = new Set<string>();
+  const baselineItems = [
+    ...kbScored.slice(0, 12),
+    ...faqScored.slice(0, 12),
+  ];
+  for (const it of baselineItems) baseline.add(`${it.kind}:${it.entry.id}`);
 
-  const ordered = (scored.length ? scored : fallback).slice(0, 25);
+  const ordered = [...kbScored, ...faqScored]
+    .map((it) => ({ ...it, inBaseline: baseline.has(`${it.kind}:${it.entry.id}`) }))
+    .sort((a, b) => {
+      // Score-matched entries first, then baseline (recency) fillers.
+      if (b.score !== a.score) return b.score - a.score;
+      if (a.inBaseline !== b.inBaseline) return a.inBaseline ? -1 : 1;
+      return 0;
+    })
+    .filter((it) => it.score > 0 || it.inBaseline)
+    .slice(0, 40);
 
   let total = 0;
   const blocks: string[] = [];
