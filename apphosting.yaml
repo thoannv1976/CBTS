@@ -1,0 +1,38 @@
+# Firebase App Hosting (Google Cloud Run under the hood) configuration.
+# Deploy: `firebase deploy --only apphosting` after running
+# `firebase apphosting:backends:create`.
+runConfig:
+  minInstances: 0
+  maxInstances: 4
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 1024
+
+env:
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: cbts-e6b0e
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: cbts-e6b0e.firebaseapp.com
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: cbts-e6b0e.firebasestorage.app
+    availability:
+      - BUILD
+      - RUNTIME
+  # Gắn các secret còn lại (API key, sender id, app id, Anthropic key) qua
+  # Secret Manager: `firebase apphosting:secrets:set ANTHROPIC_API_KEY`
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    secret: NEXT_PUBLIC_FIREBASE_API_KEY
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    secret: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    secret: NEXT_PUBLIC_FIREBASE_APP_ID
+  - variable: ANTHROPIC_API_KEY
+    secret: ANTHROPIC_API_KEY
+  - variable: ADMIN_EMAILS
+    secret: ADMIN_EMAILS

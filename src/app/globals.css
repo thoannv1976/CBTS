@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-grad: radial-gradient(1200px 600px at 0% 0%, #dbeafe 0%, transparent 60%),
+             radial-gradient(900px 500px at 100% 0%, #ede9fe 0%, transparent 55%),
+             radial-gradient(900px 500px at 50% 100%, #cffafe 0%, transparent 55%);
+}
+
+html, body { height: 100%; }
+body {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: #0f172a;
+  background: #f8fafc;
+  background-image: var(--bg-grad);
+  background-attachment: fixed;
+}
+
+/* Subtle scrollbar styling */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+@layer components {
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/60 shadow-xl shadow-slate-200/40;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 font-medium
+           transition-all focus:outline-none focus:ring-2 focus:ring-brand-300 disabled:opacity-50
+           disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn text-white bg-gradient-to-r from-brand-600 to-brand-500
+           hover:from-brand-700 hover:to-brand-600 shadow-lg shadow-brand-200;
+  }
+  .btn-ghost {
+    @apply btn text-slate-700 hover:bg-slate-100;
+  }
+  .btn-outline {
+    @apply btn border border-slate-200 bg-white text-slate-800 hover:border-brand-300 hover:text-brand-700;
+  }
+  .input {
+    @apply w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-800
+           placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100
+           outline-none transition;
+  }
+  .card {
+    @apply rounded-2xl bg-white border border-slate-200 shadow-sm;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full bg-brand-50 text-brand-700 text-xs font-medium px-2.5 py-1;
+  }
+  .prose-chat p { margin: 0.4rem 0; }
+  .prose-chat ul { list-style: disc; padding-left: 1.25rem; }
+  .prose-chat ol { list-style: decimal; padding-left: 1.25rem; }
+  .prose-chat code { background: #f1f5f9; padding: 0 .25rem; border-radius: .25rem; }
+  .prose-chat a { color: #1f5ff5; text-decoration: underline; }
+}
