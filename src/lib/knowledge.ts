@@ -2,7 +2,7 @@ import "server-only";
 import { adminDb } from "./firebaseAdmin";
 import type { KnowledgeEntry, Faq } from "./types";
 
-const MAX_KB_CHARS = 18_000;
+const MAX_KB_CHARS = 120_000;
 
 /**
  * Pull the most recently updated knowledge entries plus the top FAQs and

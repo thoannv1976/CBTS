@@ -4,6 +4,7 @@ import type { KnowledgeEntry } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 export async function GET(req: NextRequest) {
   if (!(await requireAdmin(req))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -22,11 +23,11 @@ export async function POST(req: NextRequest) {
   }
   const now = Date.now();
   const doc = {
-    title: String(body.title).slice(0, 300),
+    title: String(body.title).slice(0, 500),
     category: String(body.category || "Tổng quát").slice(0, 100),
-    tags: Array.isArray(body.tags) ? body.tags.slice(0, 20).map((t) => String(t).slice(0, 60)) : [],
-    content: String(body.content).slice(0, 20_000),
-    source: body.source ? String(body.source).slice(0, 500) : null,
+    tags: Array.isArray(body.tags) ? body.tags.slice(0, 30).map((t) => String(t).slice(0, 60)) : [],
+    content: String(body.content).slice(0, 200_000),
+    source: body.source ? String(body.source).slice(0, 1000) : null,
     fileUrl: body.fileUrl ? String(body.fileUrl).slice(0, 1000) : null,
     createdAt: now,
     updatedAt: now,
