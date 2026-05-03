@@ -5,6 +5,8 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut as fbSignOut,
   onAuthStateChanged,
   type Auth,
@@ -58,12 +60,63 @@ export function getClientStorage(): FirebaseStorage {
   return storage;
 }
 
-export async function signInWithGoogle(): Promise<User> {
-  const auth = getClientAuth();
+function makeProvider() {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
-  const result = await signInWithPopup(auth, provider);
-  return result.user;
+  return provider;
+}
+
+/**
+ * Detect environments where popup-based sign-in is unreliable: Cloud Shell
+ * Web Preview, embedded webviews, and contexts where the page is loaded in
+ * an iframe (cross-origin postMessage from the OAuth popup is blocked).
+ */
+function shouldUseRedirect() {
+  if (typeof window === "undefined") return false;
+  if (window.self !== window.top) return true;
+  const host = window.location.hostname;
+  return /cloudshell\.dev$|webcontainer|stackblitz/i.test(host);
+}
+
+export async function signInWithGoogle(): Promise<User | null> {
+  const auth = getClientAuth();
+  const provider = makeProvider();
+
+  if (shouldUseRedirect()) {
+    await signInWithRedirect(auth, provider);
+    return null; // page navigates away; result handled by consumeRedirect()
+  }
+
+  try {
+    const result = await signInWithPopup(auth, provider);
+    return result.user;
+  } catch (err) {
+    const code = (err as { code?: string }).code;
+    if (
+      code === "auth/popup-blocked" ||
+      code === "auth/popup-closed-by-user" ||
+      code === "auth/cancelled-popup-request" ||
+      code === "auth/operation-not-supported-in-this-environment"
+    ) {
+      await signInWithRedirect(auth, provider);
+      return null;
+    }
+    throw err;
+  }
+}
+
+/**
+ * Call once on app boot to surface any pending redirect-based sign-in result
+ * and any error so the UI can display it.
+ */
+export async function consumeRedirect(): Promise<User | null> {
+  try {
+    const auth = getClientAuth();
+    const result = await getRedirectResult(auth);
+    return result?.user ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function signOut() {

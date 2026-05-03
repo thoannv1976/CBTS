@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { User } from "firebase/auth";
-import { getClientAuth, onAuthStateChanged, signOut } from "@/lib/firebase";
+import { getClientAuth, onAuthStateChanged, signOut, consumeRedirect } from "@/lib/firebase";
 
 interface AuthCtx {
   user: User | null;
@@ -31,6 +31,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let cleanup: (() => void) | undefined;
     try {
       const auth = getClientAuth();
+      // Pick up sign-in results that completed via redirect (Cloud Shell,
+      // mobile webviews, etc.) before wiring up the listener.
+      void consumeRedirect();
       cleanup = onAuthStateChanged(auth, async (u) => {
         setUser(u);
         setLoading(false);
