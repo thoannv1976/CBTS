@@ -50,7 +50,11 @@ export async function POST(req: NextRequest) {
     const lastUser = [...messages].reverse().find((m) => m.role === "user");
     const question = lastUser?.content || "";
 
-    const { context, sources } = await buildKnowledgeContext(question);
+    const { context, sources, debug } = await buildKnowledgeContext(question);
+
+    console.log(
+      `[chat] q="${question.slice(0, 80)}" kb=${debug.kbCount} faq=${debug.faqCount} included=${debug.included} chars=${debug.chars}`,
+    );
 
     const userTurns = messages.map((m) => ({
       role: m.role,
@@ -64,8 +68,9 @@ export async function POST(req: NextRequest) {
       {
         type: "text" as const,
         text:
-          "KHO TRI THỨC (chỉ dùng nội bộ, không tiết lộ nguyên văn):\n\n" +
-          (context || "(Kho tri thức trống. Hãy hướng người dùng liên hệ phòng tuyển sinh.)"),
+          `KHO TRI THỨC CHÍNH THỨC CỦA NHÀ TRƯỜNG (gồm ${debug.included} mục, ${debug.chars} ký tự — toàn bộ tài liệu hiện có).\n` +
+          "Hãy ĐỌC TOÀN BỘ trước khi trả lời. Chỉ kết luận \"không có thông tin\" sau khi đã thực sự rà soát mọi mục bên dưới và xác định không có nội dung liên quan, kể cả gián tiếp.\n\n" +
+          (context || "(Kho tri thức hiện trống. Hãy hướng người dùng liên hệ Phòng Tuyển sinh.)"),
         cache_control: { type: "ephemeral" as const },
       },
     ];
